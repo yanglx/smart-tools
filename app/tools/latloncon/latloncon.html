@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>坐标转换工具</title>
+    <!-- 引入coordtransform.js文件 -->
+    <script src="coordtransform.js"></script>
+    <!-- 引入latloncon.js文件 -->
+    <script src="latloncon.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #4a90e2;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .textarea-container {
+            width: 40%;
+        }
+        .middle-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 4%;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        textarea {
+            width: 98%;
+            height: 600px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            resize: vertical;
+        }
+        select, button {
+            width: 200px;
+            margin: 5px 0;
+            padding: 10px;
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s;
+        }
+        select:hover, button:hover {
+            background-color: #357ab8;
+        }
+    </style>
+</head>
+<body>
+<h1>坐标转换工具</h1>
+<div class="container">
+    <div class="textarea-container">
+        <label for="inputCoordinates">输入经纬度数组（格式：[[lng1, lat1], [lng2, lat2], ...] 或每行一个经纬度对，如：lng1, lat1）:</label>
+        <textarea id="inputCoordinates" placeholder="例如：[[119.515314, 25.698791], [119.501045, 25.702623]] 或 119.515314, 25.698791"></textarea>
+    </div>
+    <div class="middle-container">
+        <select id="conversionType">
+            <option value="bd09towgs84">BD-09（百度）转WGS-84</option>
+            <option value="wgs84tobd09">WGS-84转BD-09（百度）</option>
+            <option value="gcj02towgs84">GCJ-02（高德）转WGS-84</option>
+            <option value="wgs84togcj02">WGS-84转GCJ-02（高德）</option>
+        </select>
+        <button onclick="convertCoordinates()">转换坐标</button>
+    </div>
+    <div class="textarea-container">
+        <label for="outputCoordinates">转换后的经纬度数组:</label>
+        <textarea id="outputCoordinates" readonly></textarea>
+    </div>
+</div>
+
+<script>
+    function convertCoordinates() {
+        const inputElement = document.getElementById('inputCoordinates');
+        const outputElement = document.getElementById('outputCoordinates');
+        const conversionType = document.getElementById('conversionType').value;
+
+        try {
+            const inputText = inputElement.value.trim();
+
+            let inputCoordinates;
+
+            // 尝试解析为JSON格式的二维数组
+            try {
+                inputCoordinates = JSON.parse(inputText);
+                if (!Array.isArray(inputCoordinates) || !inputCoordinates.every(coord => Array.isArray(coord) && coord.length === 2)) {
+                    throw new Error('输入格式不正确');
+                }
+            } catch (jsonError) {
+                // 如果解析失败，尝试按行解析
+                const lines = inputText.split('\n');
+                inputCoordinates = lines.map((line, index) => {
+                    const parts = line.trim().split(',').map(Number);
+                    if (parts.length !== 2 || parts.some(isNaN)) {
+                        throw new Error(`第 ${index + 1} 行格式不正确`);
+                    }
+                    return parts;
+                });
+            }
+
+            // 根据选择的转换类型进行坐标转换
+            let convertedCoordinates;
+            if (conversionType === 'bd09towgs84') {
+                convertedCoordinates = bd09towgs84BatchConvert(inputCoordinates);
+            } else if (conversionType === 'wgs84togcj02') {
+                convertedCoordinates = wgs84togcj02BatchConvert(inputCoordinates);
+            } else if (conversionType === 'wgs84tobd09') {
+                convertedCoordinates = wgs84tobd09BatchConvert(inputCoordinates);
+            } else if (conversionType === 'gcj02towgs84') {
+                convertedCoordinates = gcj02towgs84BatchConvert(inputCoordinates);
+            } else {
+                throw new Error('未知的转换类型');
+            }
+
+            // 格式化转换后的结果
+            const formattedCoordinates = formatCoordinates(convertedCoordinates);
+
+            // 将格式化后的结果输出到输出框
+            outputElement.value = formattedCoordinates;
+
+        } catch (error) {
+            alert('输入格式错误: ' + error.message);
+            outputElement.value = '';
+        }
+    }
+</script>
+</body>
+</html>
