@@ -184,7 +184,7 @@ track the number of pinned users, like so:
 `http://www.example.com/index.html?pinned=true`
 
 ```html
-<meta name="msapplication-starturl" content="http://www.example.com/index.html?pinned=true">
+<meta name="msapplication-starturl" content="http://www.example.com/app/tools/latloncon/latloncon.html?pinned=true">
 ```
 
 ### Recolor IE's controls manually for a Pinned Site
